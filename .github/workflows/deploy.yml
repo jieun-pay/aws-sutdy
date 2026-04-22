@@ -1,0 +1,31 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v3
+
+      - name: EC2에 배포
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            cd /home/ubuntu/app
+            git pull origin main
+            docker build -t nextjs-app .
+            docker stop nextjs-container || true
+            docker rm nextjs-container || true
+            docker run -d \
+              --name nextjs-container \
+              -p 3000:3000 \
+              nextjs-app
