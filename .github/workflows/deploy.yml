@@ -35,12 +35,12 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_KEY }}
           script: |
-            # docker-compose 없으면 설치
-            if ! command -v docker-compose &> /dev/null; then
-              sudo apt-get update
-              sudo apt-get install -y docker-compose
-            fi
             cd /home/ubuntu/app
             docker load < nextjs-app.tar.gz
-            docker-compose down
-            docker-compose up -d
+            docker stop nextjs-container || true
+            docker rm nextjs-container || true
+            docker run -d \
+            --name nextjs-container \
+            -p 3000:3000 \
+            --restart always \
+            nextjs-app:latest
