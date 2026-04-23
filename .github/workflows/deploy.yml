@@ -35,6 +35,16 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_KEY }}
           script: |
+            # Node.js 없으면 설치
+            if ! command -v node &> /dev/null; then
+              curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+              sudo apt-get install -y nodejs
+            fi
+            # yarn 없으면 설치
+            if ! command -v yarn &> /dev/null; then
+              sudo npm install -g yarn
+            fi
+
             cd /home/ubuntu/app
             git pull origin main
             yarn install --frozen-lockfile
