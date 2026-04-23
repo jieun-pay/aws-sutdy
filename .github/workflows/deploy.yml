@@ -44,3 +44,4 @@ jobs:
             yarn install --frozen-lockfile
             pkill -f "yarn start" || true
             nohup yarn start > /home/ubuntu/app/app.log 2>&1 &
+            disown
