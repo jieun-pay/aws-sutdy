@@ -10,12 +10,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Node.js 설치
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: 패키지 설치
+        run: yarn install --frozen-lockfile
+
+      - name: 빌드
+        run: yarn build
+
       - name: EC2에 배포
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_KEY }}
+          command_timeout: 30m
           script: |
             if ! command -v node &> /dev/null; then
               curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
@@ -27,6 +42,5 @@ jobs:
             cd /home/ubuntu/app
             git pull origin main
             yarn install --frozen-lockfile
-            yarn build
             pkill -f "yarn start" || true
             nohup yarn start > /home/ubuntu/app/app.log 2>&1 &
