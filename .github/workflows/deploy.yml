@@ -21,10 +21,16 @@ jobs:
       - name: 패키지 설치
         run: yarn install --frozen-lockfile
 
-      - name: 빌드
-        run: yarn build
+      - name: .next 폴더 EC2로 전송
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_KEY }}
+          source: ".next"
+          target: /home/ubuntu/app/
 
-      - name: EC2에 배포
+      - name: EC2에서 서버 실행
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -40,6 +46,7 @@ jobs:
               sudo npm install -g yarn
             fi
             cd /home/ubuntu/app
+            yarn build
             git pull origin main
             yarn install --frozen-lockfile
             pkill -f "yarn start" || true
