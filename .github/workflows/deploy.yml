@@ -13,22 +13,19 @@ jobs:
       - name: 코드 체크아웃
         uses: actions/checkout@v4
 
-#      - name: Docker 이미지 빌드
-#        run: docker build -t nextjs-app .
-#
-#      - name: 이미지를 파일로 저장
-#        run: docker save nextjs-app | gzip > nextjs-app.tar.gz
+      - name: 프로젝트 압축
+        run: tar -czf app.tar.gz .
 
-#      - name: EC2에 이미지 파일 전송
-#        uses: appleboy/scp-action@master
-#        with:
-#          host: ${{ secrets.EC2_HOST }}
-#          username: ubuntu
-#          key: ${{ secrets.EC2_KEY }}
-#          source: nextjs-app.tar.gz
-#          target: /home/ubuntu/app/
+      - name: EC2에 압축 파일 전송
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_KEY }}
+          source: app.tar.gz
+          target: /home/ubuntu/
 
-      - name: EC2에 배포
+      - name: EC2에서 압축 해제 후 실행
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -40,13 +37,15 @@ jobs:
               curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
               sudo apt-get install -y nodejs
             fi
+
             # yarn 없으면 설치
             if ! command -v yarn &> /dev/null; then
               sudo npm install -g yarn
             fi
 
+            cd /home/ubuntu
+            tar -xzf app.tar.gz -C /home/ubuntu/app
             cd /home/ubuntu/app
-            git pull origin main
             yarn install --frozen-lockfile
             yarn build
             pkill -f "yarn start" || true
