@@ -14,7 +14,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: 프로젝트 압축
-        run: tar -czf app.tar.gz .
+        run: tar -czf /tmp/app.tar.gz .
 
       - name: EC2에 압축 파일 전송
         uses: appleboy/scp-action@master
@@ -22,7 +22,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_KEY }}
-          source: app.tar.gz
+          source: /tmp/app.tar.gz
           target: /home/ubuntu/
 
       - name: EC2에서 압축 해제 후 실행
@@ -32,19 +32,15 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_KEY }}
           script: |
-            # Node.js 없으면 설치
             if ! command -v node &> /dev/null; then
               curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
               sudo apt-get install -y nodejs
             fi
-
-            # yarn 없으면 설치
             if ! command -v yarn &> /dev/null; then
               sudo npm install -g yarn
             fi
-
             cd /home/ubuntu
-            tar -xzf app.tar.gz -C /home/ubuntu/app
+            tar -xzf tmp/app.tar.gz -C /home/ubuntu/app
             cd /home/ubuntu/app
             yarn install --frozen-lockfile
             yarn build
