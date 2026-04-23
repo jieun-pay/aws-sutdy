@@ -13,23 +13,6 @@ jobs:
       - name: 코드 체크아웃
         uses: actions/checkout@v4
 
-      - name: Node.js 설치
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: 패키지 설치
-        run: yarn install --frozen-lockfile
-
-      - name: .next 폴더 EC2로 전송
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ubuntu
-          key: ${{ secrets.EC2_KEY }}
-          source: ".next"
-          target: /home/ubuntu/app/
-
       - name: EC2에서 서버 실행
         uses: appleboy/ssh-action@master
         with:
@@ -46,8 +29,8 @@ jobs:
               sudo npm install -g yarn
             fi
             cd /home/ubuntu/app
-            yarn build
             git pull origin main
+            yarn build
             yarn install --frozen-lockfile
             pkill -f "yarn start" || true
             nohup yarn start > /home/ubuntu/app/app.log 2>&1 &
