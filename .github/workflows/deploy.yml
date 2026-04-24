@@ -21,6 +21,7 @@ jobs:
           key: ${{ secrets.EC2_KEY }}
           command_timeout: 30m
           script: |
+            cd /home/ubuntu/app
             if [ -d ".git" ]; then
               git pull origin main
             else
@@ -33,7 +34,6 @@ jobs:
             if ! command -v yarn &> /dev/null; then
               sudo npm install -g yarn
             fi
-            cd /home/ubuntu/app
             git pull origin main
             yarn install --frozen-lockfile --prefer-offline
             yarn build
