@@ -21,6 +21,11 @@ jobs:
           key: ${{ secrets.EC2_KEY }}
           command_timeout: 30m
           script: |
+            if [ -d ".git" ]; then
+              git pull origin main
+            else
+              git clone https://github.com/jieun-pay/aws-sutdy.git .
+            fi
             if ! command -v node &> /dev/null; then
               curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
               sudo apt-get install -y nodejs
@@ -30,8 +35,7 @@ jobs:
             fi
             cd /home/ubuntu/app
             git pull origin main
+            yarn install --frozen-lockfile --prefer-offline
             yarn build
-            yarn install --frozen-lockfile
-            pkill -f "yarn start" || true
+            sudo fuser -k 3000/tcp || true
             nohup yarn start > /home/ubuntu/app/app.log 2>&1 &
-            disown
