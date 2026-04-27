@@ -164,7 +164,7 @@ export default function PaymentModule() {
     const handlePayment = async (paymentMethod: string) => {
         // [수정] 클릭 시점에만 동적인 데이터 생성 (Hydration 방지)
         const currentEdiDate = getFormattedDate();
-        const containerUrl = `${window.location.origin}/paymentComplete`;
+        const containerUrl = `${process.env.NEXT_PUBLIC_API_URL}/paymentComplete`;
 
         const _encData = await generateEncData(_merchantID, currentEdiDate, _goodsAmt, _merchantKey);
 
