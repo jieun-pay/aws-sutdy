@@ -23,15 +23,16 @@ jobs:
           script: |
             cd /home/ubuntu/app
             
-            # --- [환경변수 처리 로직 추가] ---
-            # GitHub Secrets에 등록한 ENV_VARS(전체 내용)를 .env 파일로 저장
-            echo "${{ secrets.ENV_VARS }}" > .env
-            
             if [ -d ".git" ]; then
               git pull origin main
             else
               git clone https://github.com/jieun-pay/aws-sutdy.git .
             fi
+            
+            # --- [환경변수 처리 로직 추가] ---
+            # GitHub Secrets에 등록한 ENV_VARS(전체 내용)를 .env 파일로 저장
+            echo "${{ secrets.ENV_VARS }}" > .env
+            
             if ! command -v node &> /dev/null; then
               curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
               sudo apt-get install -y nodejs
