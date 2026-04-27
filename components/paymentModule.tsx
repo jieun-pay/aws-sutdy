@@ -6,6 +6,46 @@ import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Script from 'next/script';
 
+type ResultPayload = {
+    goodsAmt: number;
+    mid: string;
+    pmCd: string;
+    nonce: string;
+    tid: string;
+    mbsReserved: string;
+    ediDate: string;
+    payData: string;
+    hashString: string;
+};
+
+type PaymentPayload = {
+    payMethod: string;
+    payType: string;
+    mid: string;
+    goodsNm: string;
+    ordNo: string;
+    goodsAmt: number;
+    ordNm: string;
+    ordTel: string;
+    ordEmail: string;
+    ordIp: string;
+    returnUrl: string;
+    mbsReserved: string;
+    ediDate: string;
+    hashString: string;
+};
+
+declare global {
+    interface Window {
+        __pgAsistantLoaded__?: boolean;
+        __submitPGForm?: (payload: {
+            frameName?: string;
+            actionUrl: string;
+            fields: Record<string, string | number | boolean | null | undefined>;
+        }) => Promise<boolean>;
+    }
+}
+
 export default function PaymentModule() {
     const isInitialized = useRef(false);
 
@@ -23,6 +63,7 @@ export default function PaymentModule() {
     const approvalUrl = `${process.env.NEXT_PUBLIC_API_URL}/payment/v1/approval`;
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setMounted(true);
         if (isInitialized.current) return;
 
@@ -83,14 +124,14 @@ export default function PaymentModule() {
                 );
 
                 setResultData({
-                    goodsAmt: data.goodsAmt,
-                    mid: data.mid,
-                    pmCd: data.pmCd,
-                    nonce: data.nonce,
-                    tid: data.tid,
-                    mbsReserved: data.mbsReserved,
-                    ediDate: data.ediDate,
-                    payData: data.payData,
+                    goodsAmt: Number(data.goodsAmt),
+                    mid: data.mid as string,
+                    pmCd: data.pmCd as string,
+                    nonce: data.nonce as string,
+                    tid: data.tid as string,
+                    mbsReserved: data.mbsReserved as string,
+                    ediDate: data.ediDate as string,
+                    payData: data.payData as string,
                     hashString: _resHash,
                 });
             }
