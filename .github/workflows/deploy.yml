@@ -22,6 +22,11 @@ jobs:
           command_timeout: 30m
           script: |
             cd /home/ubuntu/app
+            
+            # --- [환경변수 처리 로직 추가] ---
+            # GitHub Secrets에 등록한 ENV_VARS(전체 내용)를 .env 파일로 저장
+            echo "${{ secrets.ENV_VARS }}" > .env
+            
             if [ -d ".git" ]; then
               git pull origin main
             else
