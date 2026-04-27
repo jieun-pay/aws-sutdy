@@ -21,27 +21,33 @@ jobs:
           key: ${{ secrets.EC2_KEY }}
           command_timeout: 30m
           script: |
+            # 1. 디렉토리가 없으면 생성하고 이동
+            mkdir -p /home/ubuntu/app
             cd /home/ubuntu/app
             
+            # 2. 코드 가져오기 (이미 있으면 pull, 없으면 clone)
             if [ -d ".git" ]; then
               git pull origin main
             else
               git clone https://github.com/jieun-pay/aws-sutdy.git .
             fi
             
-            # --- [환경변수 처리 로직 추가] ---
-            # GitHub Secrets에 등록한 ENV_VARS(전체 내용)를 .env 파일로 저장
-            echo "${{ secrets.ENV_VARS }}" > .env
+            # 3. 환경변수 파일 생성 (이 위치가 가장 확실합니다)
+            # 여러 줄의 변수도 깨지지 않게 cat <<EOF 방식을 권장합니다.
+            cat <<EOF > .env
+            ${{ secrets.ENV_VARS }}
+            EOF
             
+            # 4. 파일 생성 확인 로그 (GitHub Actions 결과창에서 확인 가능)
+            ls -al .env
+            cat .env | head -n 2 # 보안을 위해 앞의 2줄만 로그에 찍어봄
+            
+            # 5. 이후 빌드 로직
             if ! command -v node &> /dev/null; then
               curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
               sudo apt-get install -y nodejs
             fi
-            if ! command -v yarn &> /dev/null; then
-              sudo npm install -g yarn
-            fi
-            git pull origin main
-            yarn install --frozen-lockfile --prefer-offline
+            yarn install --frozen-lockfile
             yarn build
             sudo fuser -k 3000/tcp || true
             nohup yarn start > /home/ubuntu/app/app.log 2>&1 &
