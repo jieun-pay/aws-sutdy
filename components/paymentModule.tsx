@@ -55,12 +55,12 @@ export default function PaymentModule() {
     const [resultData, setResultData] = useState<ResultPayload | null>(null);
 
     // [상수 설정]
-    const SCRIPT_URL = process.env.NEXT_PUBLIC_SCRIPT_URL;
-    const _merchantID = process.env.NEXT_PUBLIC_ID || '';
-    const _merchantKey = process.env.NEXT_PUBLIC_MERCHANTKEY || '';
+    const SCRIPT_URL = 'https://testapi.remonpg.com/js/pgAsistant.js';
+    const _merchantID = 'obtest001m';
+    const _merchantKey = '1Mk0I4o35ctiZEGiIU6Z68l8ISJNBoekU01qDG90DqxOxRSC39+6XnD7gyfb1cyqdnUJKBCFdqKbuFCeCMlS9A==';
     const _goodsAmt = 1000;
-    const requestUrl = `${process.env.NEXT_PUBLIC_API_URL}/payment/v1/view/request`;
-    const approvalUrl = `${process.env.NEXT_PUBLIC_API_URL}/payment/v1/approval`;
+    const requestUrl = `https://testapi.remonpg.com/payment/v1/view/request`;
+    const approvalUrl = `https://testapi.remonpg.com/payment/v1/approval`;
 
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
