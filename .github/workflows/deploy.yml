@@ -12,7 +12,7 @@ jobs:
 
       - name: Debug SSH        # ← 이 스텝 추가
         run: |
-          cho "GitHub Actions IP: $(curl -s ifconfig.me)"
+          echo "GitHub Actions IP: $(curl -s ifconfig.me)"
           nc -zv ${{ secrets.EC2_HOST }} 22 -w 5
 
       - name: EC2에 배포
