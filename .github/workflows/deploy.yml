@@ -9,6 +9,12 @@ jobs:
     steps:
       - name: 코드 체크아웃
         uses: actions/checkout@v3
+
+      - name: Debug SSH        # ← 이 스텝 추가
+        run: |
+          cho "GitHub Actions IP: $(curl -s ifconfig.me)"
+          nc -zv ${{ secrets.EC2_HOST }} 22 -w 5
+
       - name: EC2에 배포
         uses: appleboy/ssh-action@master
         with:
