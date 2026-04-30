@@ -24,7 +24,7 @@ jobs:
           script: |
             cd /home/ubuntu/app
             git pull origin main
-            docker build -t awsec2-study .
+            docker build --no-cache -t awsec2-study .
             docker stop nextjs-container || true
             docker rm nextjs-container || true
             docker run -d \
