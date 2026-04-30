@@ -1,53 +1,27 @@
 name: Deploy to EC2
-
 on:
   push:
     branches:
       - main
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: 코드 체크아웃
-        uses: actions/checkout@v4
-
-      - name: EC2에서 서버 실행
+        uses: actions/checkout@v3
+      - name: EC2에 배포
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_KEY }}
-          command_timeout: 30m
           script: |
-            # 1. 디렉토리가 없으면 생성하고 이동
-            mkdir -p /home/ubuntu/app
             cd /home/ubuntu/app
-            
-            # 2. 코드 가져오기 (이미 있으면 pull, 없으면 clone)
-            if [ -d ".git" ]; then
-              git pull origin main
-            else
-              git clone https://github.com/jieun-pay/aws-sutdy.git .
-            fi
-            
-            # 3. 환경변수 파일 생성 (이 위치가 가장 확실합니다)
-            # 여러 줄의 변수도 깨지지 않게 cat <<EOF 방식을 권장합니다.
-            cat <<EOF > .env
-            ${{ secrets.ENV_VARS }}
-            EOF
-            
-            # 4. 파일 생성 확인 로그 (GitHub Actions 결과창에서 확인 가능)
-            ls -al .env
-            cat .env | head -n 2 # 보안을 위해 앞의 2줄만 로그에 찍어봄
-            
-            # 5. 이후 빌드 로직
-            if ! command -v node &> /dev/null; then
-              curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
-              sudo apt-get install -y nodejs
-            fi
-            yarn install --frozen-lockfile
-            yarn build
-            sudo fuser -k 3000/tcp || true
-            nohup yarn start > /home/ubuntu/app/app.log 2>&1 &
+            git pull origin main
+            docker build -t awsec2-study .
+            docker stop nextjs-container || true
+            docker rm nextjs-container || true
+            docker run -d \
+              --name nextjs-container \
+              -p 3000:3000 \
+              nextjs-app
