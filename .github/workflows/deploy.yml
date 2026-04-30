@@ -30,4 +30,4 @@ jobs:
             docker run -d \
               --name nextjs-container \
               -p 3000:3000 \
-              nextjs-app
+              awsec2-study
