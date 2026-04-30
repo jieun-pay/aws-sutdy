@@ -16,7 +16,7 @@ export interface PaymentPayload {
     mid: string;
     goodsNm: string;
     ordNo: string;
-    goodsAmt: number;
+    goodsAmt: string;
     ordNm: string;
     ordTel: string;
     ordEmail: string;

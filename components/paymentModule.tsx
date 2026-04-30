@@ -3,11 +3,10 @@
 import { generateEncData, getFormattedDate } from '@/lib/pgHelper';
 import { postToFrame, ensureIframeLayer } from '@/lib/postHtml';
 import { useEffect, useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import Script from 'next/script';
 
 type ResultPayload = {
-    goodsAmt: number;
+    goodsAmt: string;
     mid: string;
     pmCd: string;
     nonce: string;
@@ -24,7 +23,7 @@ type PaymentPayload = {
     mid: string;
     goodsNm: string;
     ordNo: string;
-    goodsAmt: number;
+    goodsAmt: string;
     ordNm: string;
     ordTel: string;
     ordEmail: string;
@@ -54,13 +53,17 @@ export default function PaymentModule() {
     const [selected, setSelected] = useState<string>('AUTH');
     const [resultData, setResultData] = useState<ResultPayload | null>(null);
 
+    console.log(resultData);
+
     // [상수 설정]
     const SCRIPT_URL = 'https://testapi.remonpg.com/js/pgAsistant.js';
     const _merchantID = 'obtest001m';
     const _merchantKey = '1Mk0I4o35ctiZEGiIU6Z68l8ISJNBoekU01qDG90DqxOxRSC39+6XnD7gyfb1cyqdnUJKBCFdqKbuFCeCMlS9A==';
-    const _goodsAmt = 1000;
+    const _goodsAmt = '1000';
     const requestUrl = `https://testapi.remonpg.com/payment/v1/view/request`;
-    const approvalUrl = `https://testapi.remonpg.com/payment/v1/approval`;
+    // const requestUrl = '/api/payment/request';
+    // const approvalUrl = `https://testapi.remonpg.com/payment/v1/approval`;
+    const approvalUrl = '/api/payment/approval';
 
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -107,64 +110,217 @@ export default function PaymentModule() {
     }, []);
 
     // [수정] 결제 완료 감지 (MutationObserver)
+    // useEffect(() => {
+    //     if (!mounted) return;
+    //     const observer = new MutationObserver(async () => {
+    //         const form = document.getElementById('pay_result_form') as HTMLFormElement | null;
+    //         if (form) {
+    //             observer.disconnect(); // 먼저 해제
+    //             const formData = new FormData(form);
+    //             const data = Object.fromEntries(formData.entries());
+    //
+    //             const _resHash = await generateEncData(
+    //                 String(data.mid),
+    //                 String(data.ediDate),
+    //                 Number(data.goodsAmt),
+    //                 _merchantKey
+    //             );
+    //
+    //             const reservedData = {
+    //                 "orderId": "OBP-1777014538320",
+    //                 "userId": "test3204@hanmail.net",
+    //                 "couponCode": "",
+    //                 "couponDiscount": 0,
+    //                 "usedPoints": 0,
+    //                 "total": 2200,
+    //                 "payable": 2200,
+    //                 "serviceType": "MART"
+    //             };
+    //
+    //             const mbsDatastringify = JSON.stringify(reservedData)
+    //
+    //             setResultData({
+    //                 goodsAmt: Number(data.goodsAmt),
+    //                 mid: data.mid as string,
+    //                 pmCd: data.pmCd as string,
+    //                 nonce: data.nonce as string,
+    //                 tid: data.tid as string,
+    //                 mbsReserved: mbsDatastringify,
+    //                 ediDate: data.ediDate as string,
+    //                 payData: data.payData as string,
+    //                 hashString: _resHash,
+    //             });
+    //
+    //         }
+    //     });
+    //
+    //     observer.observe(document.body, { childList: true, subtree: true });
+    //     return () => observer.disconnect();
+    // }, [mounted, _merchantKey]);
+    //
+    // // [수정] 최종 승인 처리 (Form POST 방식)
+    // useEffect(() => {
+    //     if (!resultData) return;
+    //
+    //     const form = document.createElement('form');
+    //     form.method = 'POST';
+    //     form.action = approvalUrl;
+    //
+    //     Object.entries(resultData).forEach(([key, value]) => {
+    //         const input = document.createElement('input');
+    //         input.type = 'hidden';
+    //         input.name = key;
+    //         input.value = String(value);
+    //         form.appendChild(input);
+    //     });
+    //
+    //     document.body.appendChild(form);
+    //     form.submit();
+    // }, [resultData, approvalUrl]);
+
+    // 넥스트 서버를 통해 요청
+// 1. PG 인증 결과 감지 (MutationObserver)
     useEffect(() => {
         if (!mounted) return;
+
         const observer = new MutationObserver(async () => {
+            // PG사가 인증 성공 후 동적으로 생성하는 result 폼을 찾습니다.
             const form = document.getElementById('pay_result_form') as HTMLFormElement | null;
-            if (form) {
-                observer.disconnect(); // 먼저 해제
+
+            if (form && !resultData) { // 데이터가 없을 때만 실행
                 const formData = new FormData(form);
                 const data = Object.fromEntries(formData.entries());
 
+                // 검증용 해시 생성
                 const _resHash = await generateEncData(
                     String(data.mid),
                     String(data.ediDate),
-                    Number(data.goodsAmt),
+                    String(data.goodsAmt),
                     _merchantKey
                 );
 
+                // [추가] 예약 데이터 구성 (필요시)
+                const reservedData = {
+                    "orderId": "OBP-1777014538320",
+                    "userId": "test3204@hanmail.net",
+                    "serviceType": "MART"
+                };
+
+                // 상태 업데이트 -> 아래의 useEffect(승인로직)를 트리거함
                 setResultData({
-                    goodsAmt: Number(data.goodsAmt),
+                    goodsAmt: _goodsAmt,
                     mid: data.mid as string,
                     pmCd: data.pmCd as string,
                     nonce: data.nonce as string,
                     tid: data.tid as string,
-                    mbsReserved: data.mbsReserved as string,
+                    mbsReserved: JSON.stringify(reservedData),
                     ediDate: data.ediDate as string,
                     payData: data.payData as string,
                     hashString: _resHash,
                 });
+
+                // 모달 레이어 제거 (선택 사항)
+                const layer = document.getElementById('pg_layer');
+                if (layer) layer.remove();
             }
         });
 
         observer.observe(document.body, { childList: true, subtree: true });
         return () => observer.disconnect();
-    }, [mounted, _merchantKey]);
+    }, [mounted, _merchantKey, resultData]);
 
-    // [수정] 최종 승인 처리 (Form POST 방식)
+
+// 2. 최종 승인 처리 (Next 서버 우회 방식)
     useEffect(() => {
         if (!resultData) return;
 
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = approvalUrl;
+        const requestApproval = async () => {
+            try {
+                const response = await fetch(approvalUrl, { // '/api/payment/approval'
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(resultData),
+                });
 
-        Object.entries(resultData).forEach(([key, value]) => {
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = key;
-            input.value = String(value);
-            form.appendChild(input);
-        });
+                // 서버 응답이 "goodsAmt=1000..." 형태라면 .json()이 아닌 .text() 후 처리가 필요할 수 있음
+                // 하지만 서버(route.ts)에서 이미 NextResponse.json()으로 바꿨다면 아래 코드가 맞습니다.
+                const result = await response.json();
+                console.log("승인 결과:", result);
 
-        document.body.appendChild(form);
-        form.submit();
+                if (result.resultCode === '0000' || result.resultCd === '0000') {
+                    window.location.href = '/payments/result/paymentComplete';
+                } else {
+                    alert(`결제 실패: ${result.resultMsg}`);
+                    setResultData(null);
+                }
+            } catch (error) {
+                console.error("승인 처리 중 오류:", error);
+            }
+        };
+
+        requestApproval();
     }, [resultData, approvalUrl]);
+
+    // [수정] 최종 승인 처리 (Form POST 방식)
+    // useEffect(() => {
+    //     if (!resultData) return;
+    //
+    //     const form = document.createElement('form');
+    //     form.method = 'POST';
+    //     form.action = approvalUrl;
+    //
+    //     Object.entries(resultData).forEach(([key, value]) => {
+    //         const input = document.createElement('input');
+    //         input.type = 'hidden';
+    //         input.name = key;
+    //         input.value = String(value);
+    //         form.appendChild(input);
+    //     });
+    //
+    //     document.body.appendChild(form);
+    //     form.submit();
+    // }, [resultData, approvalUrl]);
+
+
+    // useEffect(() => {
+    //     // resultData가 채워지면 승인 로직 실행
+    //     if (!resultData) return;
+    //
+    //     const requestApproval = async () => {
+    //         try {
+    //             // 1. 우리 서버(/api/payment/approval)로 승인 요청을 보냅니다.
+    //             const response = await fetch(approvalUrl, {
+    //                 method: 'POST',
+    //                 headers: {
+    //                     'Content-Type': 'application/json',
+    //                 },
+    //                 body: JSON.stringify({
+    //                     ...resultData,
+    //                 }),
+    //             });
+    //
+    //             if (!response.ok) throw new Error('승인 서버 응답 실패');
+    //
+    //             const result = await response.json();
+    //
+    //             // 2. 승인 결과에 따른 후속 처리
+    //             if (result.resultCode === '0000') {
+    //                 // 성공 시 성공 페이지로 이동하거나 결과 데이터 처리
+    //                 window.location.href = '/payments/result/paymentComplete';
+    //             }
+    //         } catch (error) {
+    //             console.error("승인 처리 중 오류:", error);
+    //             alert("결제 승인 중 문제가 발생했습니다.");
+    //         }
+    //     };
+    //
+    //     requestApproval();
+    // }, [resultData, approvalUrl]);
 
     const handlePayment = async (paymentMethod: string) => {
         // [수정] 클릭 시점에만 동적인 데이터 생성 (Hydration 방지)
         const currentEdiDate = getFormattedDate();
-        const containerUrl = `${process.env.NEXT_PUBLIC_API_URL}/paymentComplete`;
+        const containerUrl = `http://localhost:3000/payments/result/paymentComplete`;
 
         const _encData = await generateEncData(_merchantID, currentEdiDate, _goodsAmt, _merchantKey);
 
