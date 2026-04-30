@@ -63,7 +63,7 @@ export default function PaymentModule() {
     const requestUrl = `https://testapi.remonpg.com/payment/v1/view/request`;
     // const requestUrl = '/api/payment/request';
     // const approvalUrl = `https://testapi.remonpg.com/payment/v1/approval`;
-    const approvalUrl = '/api/payment/approval';
+    const approvalUrl = 'https://testapi.remonpg.com/api/payment/approval';
 
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -320,7 +320,7 @@ export default function PaymentModule() {
     const handlePayment = async (paymentMethod: string) => {
         // [수정] 클릭 시점에만 동적인 데이터 생성 (Hydration 방지)
         const currentEdiDate = getFormattedDate();
-        const containerUrl = `http://localhost:3000/payments/result/paymentComplete`;
+        const containerUrl = `http://52.78.132.220/payments/result/paymentComplete`;
 
         const _encData = await generateEncData(_merchantID, currentEdiDate, _goodsAmt, _merchantKey);
 
